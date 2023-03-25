@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Interactable
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - Ground
+  - Interactable
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: FrontWall
+    uniqueID: 3242346325
+    locked: 0
+  - name: SideWalls
+    uniqueID: 2792080021
+    locked: 0
+  - name: Objects
+    uniqueID: 1510062581
+    locked: 0
+  - name: Characters
+    uniqueID: 3244353675
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0
