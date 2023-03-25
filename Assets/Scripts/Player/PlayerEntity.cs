@@ -1,11 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Core.Enums;
+using Core.Tools;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Player
 {
+    
     public class PlayerEntity : MonoBehaviour
     {
         [SerializeField] private float _horizontalSpeed;
@@ -15,16 +18,19 @@ namespace Player
         [SerializeField] private Transform _groundChecker;
         [SerializeField] private LayerMask _groundLayer;
         [SerializeField] private float _groundCheckRadius;
+
+        [SerializeField] private DirectionalCameraPair _cameras;
+        
         private bool _canInteract;
         private GameObject _interactableObject;
-        private bool _faceRight;
+        private Direction _direction;
         private Rigidbody2D _rigidbody;
         
         // Start is called before the first frame update
         void Start()
         {
             _rigidbody = GetComponent<Rigidbody2D>();
-            _faceRight = true;
+            _direction = Direction.Right;
         }
 
         // Update is called once per frame
@@ -40,7 +46,7 @@ namespace Player
 
         private void SetDirection(float direction)
         {
-            if ((_faceRight && direction < 0) || (!_faceRight && direction > 0))
+            if ((_direction == Direction.Right && direction < 0) || (_direction == Direction.Left && direction > 0))
             {
                 Flip();
             }
@@ -48,8 +54,12 @@ namespace Player
 
         private void Flip()
         {
-            _faceRight = !_faceRight;
-            _playerSprite.flipX = !_faceRight;
+            _direction = _direction == Direction.Right ? Direction.Left : Direction.Right;
+            _playerSprite.flipX = _direction != Direction.Right;
+            foreach (var cameraPair in _cameras.DirectionalCameras)
+            {
+                cameraPair.Value.enabled = cameraPair.Key == _direction;
+            }
         }
 
         public void HorizontalMovement(float direction)
