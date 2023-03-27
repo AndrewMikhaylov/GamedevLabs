@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Core.Enums;
 using Core.Tools;
+using Player.PlayerAnimation;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -11,6 +12,8 @@ namespace Player
     
     public class PlayerEntity : MonoBehaviour
     {
+        [SerializeField] private AnimationController _animator;
+        
         [SerializeField] private float _horizontalSpeed;
         [SerializeField] private SpriteRenderer _playerSprite;
         [SerializeField] private float _jumpForce;
@@ -21,10 +24,9 @@ namespace Player
 
         [SerializeField] private DirectionalCameraPair _cameras;
         
-        private bool _canInteract;
-        private GameObject _interactableObject;
         private Direction _direction;
         private Rigidbody2D _rigidbody;
+        private Vector2 _movement;
         
         // Start is called before the first frame update
         void Start()
@@ -36,7 +38,14 @@ namespace Player
         // Update is called once per frame
         void Update()
         {
-            
+            UpdateAnimations();
+        }
+
+        private void UpdateAnimations()
+        {
+            _animator.PlayAnimation(AnimationType.Idle, true);
+            _animator.PlayAnimation(AnimationType.Run, _movement.magnitude>0);
+            _animator.PlayAnimation(AnimationType.Jump, !_onGround);
         }
 
         private void FixedUpdate()
@@ -64,6 +73,7 @@ namespace Player
 
         public void HorizontalMovement(float direction)
         {
+            _movement.x = direction;
             SetDirection(direction);
             Vector2 velocity = _rigidbody.velocity;
             velocity.x = direction * _horizontalSpeed;
