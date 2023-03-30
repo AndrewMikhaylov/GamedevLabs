@@ -2,8 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Core.Enums;
+using Core.Movement.Data;
 using Core.Tools;
+using DefaultNamespace;
 using Player.PlayerAnimation;
+using StatsSystem;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -13,39 +16,52 @@ namespace Player
     public class PlayerEntity : MonoBehaviour
     {
         [SerializeField] private AnimationController _animator;
-        
-        [SerializeField] private float _horizontalSpeed;
-        [SerializeField] private SpriteRenderer _playerSprite;
-        [SerializeField] private float _jumpForce;
+
+        [SerializeField] private DirectionalMovementData _directionalMovementData;
+
         [SerializeField] private bool _onGround;
         [SerializeField] private Transform _groundChecker;
         [SerializeField] private LayerMask _groundLayer;
         [SerializeField] private float _groundCheckRadius;
 
         [SerializeField] private DirectionalCameraPair _cameras;
+
+        private DirectionalMover _directionalMover;
+        private Jumper _jumper;
         
-        private Direction _direction;
         private Rigidbody2D _rigidbody;
-        private Vector2 _movement;
+
         
         // Start is called before the first frame update
-        void Start()
+        public void Initialize(IStatValueGiver statValueGiver)
         {
             _rigidbody = GetComponent<Rigidbody2D>();
-            _direction = Direction.Right;
+            
+            _directionalMover = new DirectionalMover(_rigidbody, _directionalMovementData, statValueGiver);
+            _jumper = new Jumper(_rigidbody, statValueGiver);
         }
 
         // Update is called once per frame
         void Update()
         {
             UpdateAnimations();
+            UpdateCameras();
+        }
+
+        private void UpdateCameras()
+        {
+            foreach (var cameraPair in _cameras.DirectionalCameras)
+            {
+                cameraPair.Value.enabled = cameraPair.Key == _directionalMover.Direction;
+            }
         }
 
         private void UpdateAnimations()
         {
             _animator.PlayAnimation(AnimationType.Idle, true);
-            _animator.PlayAnimation(AnimationType.Run, _movement.magnitude>0);
+            _animator.PlayAnimation(AnimationType.Run, _directionalMover.IsMoving);
             _animator.PlayAnimation(AnimationType.Jump, !_onGround);
+            _animator.PlayAnimation(AnimationType.Fall, _rigidbody.velocity.y<0&&!_onGround);
         }
 
         private void FixedUpdate()
@@ -53,42 +69,33 @@ namespace Player
             _onGround = Physics2D.OverlapCircle(_groundChecker.position, _groundCheckRadius, _groundLayer);
         }
 
-        private void SetDirection(float direction)
-        {
-            if ((_direction == Direction.Right && direction < 0) || (_direction == Direction.Left && direction > 0))
-            {
-                Flip();
-            }
-        }
+        public void HorizontalMovement(float direction) => _directionalMover.HorizontalMovement(direction);
 
-        private void Flip()
-        {
-            _direction = _direction == Direction.Right ? Direction.Left : Direction.Right;
-            _playerSprite.flipX = _direction != Direction.Right;
-            foreach (var cameraPair in _cameras.DirectionalCameras)
-            {
-                cameraPair.Value.enabled = cameraPair.Key == _direction;
-            }
-        }
 
-        public void HorizontalMovement(float direction)
-        {
-            _movement.x = direction;
-            SetDirection(direction);
-            Vector2 velocity = _rigidbody.velocity;
-            velocity.x = direction * _horizontalSpeed;
-            _rigidbody.velocity = velocity;
-        }
+        public void Jump() => _jumper.Jump(_onGround);
+        
 
-        public void Jump()
+        public void StartAttack()
         {
-            if (!_onGround)
+            if (!_animator.PlayAnimation(AnimationType.Attack1, true))
             {
                 return;
             }
-            
-            _rigidbody.AddForce(Vector2.up*_jumpForce);
 
+            _animator.ActionRequested += Attack;
+            _animator.ActionEnded += EndAttack;
+        }
+
+        private void Attack()
+        {
+            Debug.Log("Attack");
+        }
+
+        private void EndAttack()
+        {
+            _animator.ActionRequested -= Attack;
+            _animator.ActionEnded -= EndAttack;
+            _animator.PlayAnimation(AnimationType.Attack1, false);
         }
     }
 }
