@@ -1,31 +1,37 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Player.PlayerAnimation
 {
     public abstract class AnimationController : MonoBehaviour
     {
         private AnimationType _currentAnimationType;
-        public void PlayAnimation(AnimationType animationType, bool active)
+        public event Action ActionRequested;
+        public event Action ActionEnded;
+        public bool PlayAnimation(AnimationType animationType, bool active)
         {
             if (!active)
             {
                 if(_currentAnimationType == AnimationType.Idle || _currentAnimationType!=animationType)
-                    return;
+                    return false;
                 _currentAnimationType = AnimationType.Idle;
                 PlayAnimation(_currentAnimationType);
-                return;
+                return false;
             }
 
             if (_currentAnimationType>=animationType)
             {
-                return;
+                return false;
             }
 
             _currentAnimationType = animationType;
             PlayAnimation(_currentAnimationType);
+            return true;
         }
 
         protected abstract void PlayAnimation(AnimationType animationType);
+        protected void OnActionRequested() => ActionRequested?.Invoke();
+        protected void OnActionEnded() => ActionEnded?.Invoke();
 
     }
 }
